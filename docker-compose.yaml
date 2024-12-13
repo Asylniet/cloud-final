@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: event_management_db
+    environment:
+      POSTGRES_USER: event_user
+      POSTGRES_PASSWORD: event_password
+      POSTGRES_DB: event_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - event_management_network
+
+  web:
+    build: .
+    container_name: event_management_web
+    command: gunicorn event_management.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - event_management_network
+    environment:
+      - DEBUG=0
+      - DJANGO_SECRET_KEY=your-secret-key
+      - DATABASE_URL=postgres://event_user:event_password@db/event_db
+
+  redis:
+    image: redis:alpine
+    container_name: event_management_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - event_management_network
+
+  celery:
+    build: .
+    container_name: event_management_celery
+    command: celery -A event_management worker --loglevel=info
+    depends_on:
+      - redis
+      - db
+    volumes:
+      - .:/app
+    networks:
+      - event_management_network
+
+  celery-beat:
+    build: .
+    container_name: event_management_celery_beat
+    command: celery -A event_management beat --loglevel=info
+    depends_on:
+      - redis
+      - db
+    volumes:
+      - .:/app
+    networks:
+      - event_management_network
+
+networks:
+  event_management_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

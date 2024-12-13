@@ -1,0 +1,363 @@
+swagger: '2.0'
+info:
+  title: Event Management API
+  description: API for managing events, registrations, payments, notifications, and reviews.
+  version: 1.0.0
+paths:
+  /users/register:
+    post:
+      summary: Register a new user
+      operationId: registerUser
+      parameters:
+        - name: username
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: email
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: body
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User successfully registered
+        '400':
+          description: Invalid data provided
+
+  /users/{userId}/events:
+    get:
+      summary: Get all events registered by a user
+      operationId: getUserEvents
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: List of events the user is registered for
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Event'
+        '404':
+          description: User not found
+
+  /events:
+    post:
+      summary: Create a new event
+      operationId: createEvent
+      parameters:
+        - name: title
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: description
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: date_time
+          in: body
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: location
+          in: body
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event successfully created
+        '400':
+          description: Invalid event data
+
+  /events/{eventId}/register:
+    post:
+      summary: Register a user for an event
+      operationId: registerForEvent
+      parameters:
+        - name: userId
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: ticket_type
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: number_of_tickets
+          in: body
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Registration successful
+        '400':
+          description: Invalid registration data
+        '404':
+          description: Event or user not found
+
+  /events/{eventId}/tickets:
+    get:
+      summary: Get all tickets for an event
+      operationId: getEventTickets
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: List of tickets for the event
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Ticket'
+        '404':
+          description: Event not found
+
+  /events/{eventId}/payment:
+    post:
+      summary: Process payment for an event registration
+      operationId: processPayment
+      parameters:
+        - name: registrationId
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: amount
+          in: body
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: payment_method
+          in: body
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment successfully processed
+        '400':
+          description: Invalid payment data
+        '404':
+          description: Registration not found
+
+  /events/{eventId}/notifications:
+    post:
+      summary: Send notifications for an event
+      operationId: sendEventNotifications
+      parameters:
+        - name: message
+          in: body
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notifications successfully sent
+        '400':
+          description: Invalid notification data
+
+  /events/{eventId}/reviews:
+    post:
+      summary: Submit a review for an event
+      operationId: submitReview
+      parameters:
+        - name: userId
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: rating
+          in: body
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: comment
+          in: body
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review successfully submitted
+        '400':
+          description: Invalid review data
+        '404':
+          description: Event or user not found
+
+  /venues:
+    post:
+      summary: Add a new venue
+      operationId: createVenue
+      parameters:
+        - name: name
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: capacity
+          in: body
+          required: true
+          schema:
+            type: integer
+        - name: contact_info
+          in: body
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Venue successfully added
+        '400':
+          description: Invalid venue data
+
+  /categories:
+    post:
+      summary: Add a new event category
+      operationId: createCategory
+      parameters:
+        - name: name
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: description
+          in: body
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category successfully created
+        '400':
+          description: Invalid category data
+
+  /event-categories:
+    post:
+      summary: Associate an event with a category
+      operationId: associateEventWithCategory
+      parameters:
+        - name: eventId
+          in: body
+          required: true
+          schema:
+            type: string
+        - name: categoryId
+          in: body
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event successfully associated with category
+        '400':
+          description: Invalid data provided
+
+definitions:
+  Event:
+    type: object
+    properties:
+      id:
+        type: string
+      title:
+        type: string
+      description:
+        type: string
+      date_time:
+        type: string
+        format: date-time
+      location:
+        type: string
+      created_by:
+        type: string
+  Ticket:
+    type: object
+    properties:
+      id:
+        type: string
+      event_id:
+        type: string
+      type:
+        type: string
+      price:
+        type: number
+        format: float
+      availability:
+        type: integer
+  Payment:
+    type: object
+    properties:
+      id:
+        type: string
+      registration_id:
+        type: string
+      amount:
+        type: number
+        format: float
+      status:
+        type: string
+        enum: [pending, completed, failed]
+      payment_date:
+        type: string
+        format: date-time
+  Venue:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      address:
+        type: string
+      capacity:
+        type: integer
+      contact_info:
+        type: string
+  Review:
+    type: object
+    properties:
+      id:
+        type: string
+      event_id:
+        type: string
+      user_id:
+        type: string
+      rating:
+        type: integer
+      comment:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+  Category:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
